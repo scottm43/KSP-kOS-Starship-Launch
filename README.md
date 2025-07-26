@@ -9,7 +9,7 @@ Script Requirements & Recommendations:
 - The center 13 engines on the booster need the name tag "BoosterRC" - An easy way to do this is to place one engine, name that and then place again with symmetry and make sure to place the 3 middle engines before the ring of 10.
 - The 3 sea level engines on ship needs the name tag "ShipRC"
 - The booster needs a GRAVMAX Gravioli Detector
-- I recommend putting AutoChopticks.ks and Starship.ks in the "boot" folder and setting them to auto run on the tower and ship
+- I recommend putting AutoChopticks.ks and Starship.ks in the "boot" folder and setting them to auto run on the tower base and ship
 
 Mod Dependencies:
 - Starship Expansion Project v3.0.0-b5
