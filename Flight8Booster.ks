@@ -545,7 +545,7 @@ until runmode = 0 {
                 } else {
                     set ATgtReqUL to (vReq - vTgt) / 2. 
                 }
-	            set ATgtReq to ATgtReqUL:normalized * min(min(ATgtReqUL:mag, 9.81), sqrt(max((ship:thrust / ship:mass) ^ 2 - 9.81, 0.0001) ^ 2)). // There is an issue here in the sqrt() that stops 2 engine landings and I don't know what or why. - Update: I seem to have fixed it with the max()?
+	            set ATgtReq to ATgtReqUL:normalized * min(min(ATgtReqUL:mag, 9.81), sqrt(max((ship:thrust / ship:mass) ^ 2 - 9.81, 0.0001) ^ 2)).
                 set vSide to ship:velocity:surface - VTgt - ship:up:vector * vdot(ship:up:vector, ship:velocity:surface).
                 set ASideReq to -vSide / 3. // Side acceleration required to cancel drift in 3 seconds
                 set AccVec to ATgtReq + ASideReq - ship:sensors:grav.
