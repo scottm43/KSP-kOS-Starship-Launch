@@ -50,6 +50,8 @@ set maxAoa to 30.
 set targetInc to 26.5. // 26.5 is the inclination Starship takes out of Boca. Slightly south to miss Florida.
 set launchDirect to 1. // 0 is North, 1 is South
 set testCorrectionPitch to 0. // For dual engine landings the horizontal speed gets too low so I'm trying things
+set coastFlipPitch to 0.
+set coastFlipStartVector to 0.
 
 // MECO Things
 set mecoEngineBanks to list(
@@ -97,7 +99,7 @@ until runmode = 0 {
         if internalTimer >= -15 and not ship:partsdubbed("SLE.SS.OLM")[0]:ignition {
             ship:partsdubbed("SLE.SS.OLM")[0]:getModule("ModuleEnginesRF"):doEvent("activate engine").
         }
-        // Waterpad Activation - TODO: Actually implement this
+        // Waterpad Activation
         if internalTimer >= -10 and ship:partsdubbed("SLE.SS.SteelPlate"):length > 0 {
             if not ship:partsdubbed("SLE.SS.SteelPlate")[0]:ignition {
                 ship:partsdubbed("SLE.SS.SteelPlate")[0]:getModule("ModuleEnginesRF"):doEvent("activate engine").
@@ -282,7 +284,7 @@ until runmode = 0 {
         // Start flip manually. SEP booster doesn't get pushed back a great deal from hotstaging so this is needed
         if internalTimer >= fuelDepletedTime + 8 {
             lock steering to heading(azimuthCalc() - 180, 0, 180).
-            set steeringManager:maxstoppingtime to 1.
+            set steeringManager:maxstoppingtime to 2.
             set steeringManager:rolltorquefactor to 6.
             set runmode to 4.
         }
@@ -345,7 +347,7 @@ until runmode = 0 {
         if vang(heading(90 - arcTan2(padLocation:lat - addons:tr:impactpos:lat, padLocation:lng - addons:tr:impactpos:lng), 0):vector, ship:facing:vector) < 25 {
             local thrustTarget is (raptorAvailableThrustTest * 13) * 0.8.
             // Steering
-            lock steering to heading(90 - arcTan2(padLocation:lat - addons:tr:impactpos:lat, padLocation:lng - addons:tr:impactpos:lng), 1, 180).
+            lock steering to heading(90 - arcTan2(padLocation:lat - addons:tr:impactpos:lat, padLocation:lng - addons:tr:impactpos:lng), 0, 180).
             rcsCommand(False).
             gridfinCommand(False, False).
 
@@ -379,16 +381,22 @@ until runmode = 0 {
         }
     }
     if runmode = 5 {
-        // Coasting Flip
-        local rcsLength is 1.5.
-        set ship:control:pitch to 0.
-        if internalTimer > boostBackShutdownTime + 4 and internalTimer < (boostBackShutdownTime + 4) + rcsLength {
-            set ship:control:pitch to -1.
+        // Coast Flip
+        if coastFlipStartVector = 0 {
+            set coastFlipStartVector to facing:vector.
         }
+        if coastFlipPitch = 0 {
+            set coastFlipPitch to vectorPitch(coastFlipStartVector).
+        }
+        local pitchIncrement is 0.1.
         // Steering
-        unlock steering.
         if vAng(srfRetrograde:vector, ship:facing:vector) <= 30 {
             lock steering to correctSteering().
+        } else {
+            if internalTimer >= boostBackShutdownTime + 4 {
+                set coastFlipPitch to coastFlipPitch + pitchIncrement.
+            }
+            lock steering to heading(vectorHeading(coastFlipStartVector), coastFlipPitch, 180).
         }
         rcsCommand(True).
         gridfinCommand(False, False).
@@ -537,7 +545,7 @@ until runmode = 0 {
                 } else {
                     set ATgtReqUL to (vReq - vTgt) / 2. 
                 }
-	            set ATgtReq to ATgtReqUL:normalized * min(min(ATgtReqUL:mag, 9.81), sqrt(max((ship:thrust / ship:mass) ^ 2 - 9.81, 0.0001) ^ 2)).
+	            set ATgtReq to ATgtReqUL:normalized * min(min(ATgtReqUL:mag, 9.81), sqrt(max((ship:thrust / ship:mass) ^ 2 - 9.81, 0.0001) ^ 2)). // There is an issue here in the sqrt() that stops 2 engine landings and I don't know what or why. - Update: I seem to have fixed it with the max()?
                 set vSide to ship:velocity:surface - VTgt - ship:up:vector * vdot(ship:up:vector, ship:velocity:surface).
                 set ASideReq to -vSide / 3. // Side acceleration required to cancel drift in 3 seconds
                 set AccVec to ATgtReq + ASideReq - ship:sensors:grav.
